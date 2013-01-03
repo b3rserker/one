@@ -106,6 +106,7 @@ if [ -z "$ROOT" ] ; then
     INCLUDE_LOCATION="/usr/include"
     SHARE_LOCATION="/usr/share/one"
     MAN_LOCATION="/usr/share/man/man1"
+    VM_LOCATION="/var/lib/one/vms"
 
     if [ "$CLIENT" = "yes" ]; then
         MAKE_DIRS="$BIN_LOCATION $LIB_LOCATION $ETC_LOCATION"
@@ -131,7 +132,8 @@ if [ -z "$ROOT" ] ; then
         MAKE_DIRS="$BIN_LOCATION $LIB_LOCATION $ETC_LOCATION $VAR_LOCATION \
                    $INCLUDE_LOCATION $SHARE_LOCATION \
                    $LOG_LOCATION $RUN_LOCATION $LOCK_LOCATION \
-                   $SYSTEM_DS_LOCATION $DEFAULT_DS_LOCATION $MAN_LOCATION"
+                   $SYSTEM_DS_LOCATION $DEFAULT_DS_LOCATION $MAN_LOCATION \
+                   $VM_LOCATION"
 
         DELETE_DIRS="$LIB_LOCATION $ETC_LOCATION $LOG_LOCATION $VAR_LOCATION \
                      $RUN_LOCATION $SHARE_DIRS"
@@ -151,6 +153,7 @@ else
     INCLUDE_LOCATION="$ROOT/include"
     SHARE_LOCATION="$ROOT/share"
     MAN_LOCATION="$ROOT/share/man/man1"
+    VM_LOCATION="$VAR_LOCATION/vms"
 
     if [ "$CLIENT" = "yes" ]; then
         MAKE_DIRS="$BIN_LOCATION $LIB_LOCATION $ETC_LOCATION"
@@ -169,7 +172,8 @@ else
     else
         MAKE_DIRS="$BIN_LOCATION $LIB_LOCATION $ETC_LOCATION $VAR_LOCATION \
                    $INCLUDE_LOCATION $SHARE_LOCATION $SYSTEM_DS_LOCATION \
-                   $DEFAULT_DS_LOCATION $MAN_LOCATION $OZONES_LOCATION"
+                   $DEFAULT_DS_LOCATION $MAN_LOCATION $OZONES_LOCATION \
+                   $VM_LOCATION"
 
         DELETE_DIRS="$MAKE_DIRS"
 
@@ -909,7 +913,6 @@ TM_VMFS_FILES="src/tm_mad/vmfs/clone \
                  src/tm_mad/vmfs/mv \
                  src/tm_mad/vmfs/context \
                  src/tm_mad/vmfs/mvds \
-                 src/tm_mad/vmfs/tm_vmfs.conf \
                  src/tm_mad/vmfs/postmigrate \
                  src/tm_mad/vmfs/premigrate"
 
@@ -997,11 +1000,18 @@ ONEDB_MIGRATOR_FILES="src/onedb/2.0_to_2.9.80.rb \
                       src/onedb/3.3.0_to_3.3.80.rb \
                       src/onedb/3.3.80_to_3.4.0.rb \
                       src/onedb/3.4.0_to_3.4.1.rb \
-                      src/onedb/3.4.1_to_3.5.80.rb \
+                      src/onedb/3.4.1_to_3.4.2.rb \
+                      src/onedb/3.4.2_to_3.4.3.rb \
+                      src/onedb/3.4.3_to_3.4.4.rb \
+                      src/onedb/3.4.4_to_3.5.80.rb \
                       src/onedb/3.5.80_to_3.6.0.rb \
-                      src/onedb/3.6.0_to_3.7.80.rb \
+                      src/onedb/3.6.0_to_3.6.1.rb \
+                      src/onedb/3.6.1_to_3.6.2.rb \
+                      src/onedb/3.6.2_to_3.6.3.rb \
+                      src/onedb/3.6.3_to_3.7.80.rb \
                       src/onedb/3.7.80_to_3.8.0.rb \
                       src/onedb/3.8.0_to_3.8.1.rb \
+                      src/onedb/3.8.1_to_3.8.2.rb \
                       src/onedb/fsck.rb \
                       src/onedb/onedb.rb \
                       src/onedb/onedb_backend.rb"

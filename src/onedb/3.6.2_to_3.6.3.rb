@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # -------------------------------------------------------------------------- #
 # Copyright 2002-2012, OpenNebula Project Leads (OpenNebula.org)             #
 #                                                                            #
@@ -16,47 +14,37 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-# DELETE <host:remote_system_ds/disk.i|host:remote_system_ds/>
-#   - host is the target host to deploy the VM
-#   - remote_system_ds is the path for the system datastore in the host
+class String
+    def red
+        colorize(31)
+    end
 
-DST=$1
-VM_ID=$2
-DS_ID=$3
+private
 
-if [ -z "${ONE_LOCATION}" ]; then
-    TMCOMMON=/var/lib/one/remotes/tm/tm_common.sh
-else
-    TMCOMMON=$ONE_LOCATION/var/remotes/tm/tm_common.sh
-fi
+    def colorize(color_code)
+        "\e[#{color_code}m#{self}\e[0m"
+    end
+end
 
-. $TMCOMMON
+module Migrator
+    def db_version
+        "3.6.3"
+    end
 
-#-------------------------------------------------------------------------------
-# Return if deleting a disk, we will delete them when removing the
-# remote_system_ds directory for the VM (remotely)
-#-------------------------------------------------------------------------------
-DST_PATH=`arg_path $DST`
-DST_HOST=`arg_host $DST`
+    def one_version
+        "OpenNebula 3.6.3"
+    end
 
-# Delete the device if it's a clone (LVM snapshot)
-DELETE_CMD=$(cat <<EOF
-    DEV=\$(readlink $DST_PATH)
-    $SUDO $LVREMOVE -f \$DEV
+    def up
+        puts
+        puts "ATTENTION: manual intervention required".red
+        puts <<-END.gsub(/^ {8}/, '')
+        Virtual Machine deployment files have been moved from /var/lib/one to
+        /var/lib/one/vms. You need to move these files manually:
 
-    # remove link
-    rm -f $DST_PATH
-EOF
-)
+            $ mv /var/lib/one/[0-9]* /var/lib/one/vms
 
-if [ `is_disk $DST_PATH` -eq 1 ]; then
-    # Disk
-    ssh_exec_and_log "$DST_HOST" "$DELETE_CMD" \
-        "Error deleting $DST_PATH"
-else
-    # Directory
-    log "Deleting $DST_PATH"
-    ssh_exec_and_log "$DST_HOST" "rm -rf $DST_PATH" "Error deleting $DST_PATH"
-fi
-
-exit 0
+        END
+        return true
+    end
+end

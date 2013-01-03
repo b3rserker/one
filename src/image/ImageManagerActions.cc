@@ -417,6 +417,8 @@ int ImageManager::delete_image(int iid, const string& ds_data)
         imd->rm(img->get_oid(), *drv_msg);
         img->set_state(Image::DELETE);
 
+        img->clear_cloning_id();
+
         ipool->update(img);
     }
 
@@ -671,6 +673,13 @@ int ImageManager::stat_image(Template*     img_tmpl,
     SyncRequest sr;
 
     int rc = 0;
+
+    if ( imd == 0 )
+    {
+        res = "Could not get datastore driver";
+        NebulaLog::log("ImM",Log::ERROR, res);
+        return -1;
+    }
 
     img_tmpl->get("TYPE", type_att);
 

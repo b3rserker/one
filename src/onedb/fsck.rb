@@ -21,11 +21,11 @@ require 'set'
 
 module OneDBFsck
     def db_version
-        "3.8.1"
+        "3.8.2"
     end
 
     def one_version
-        "OpenNebula 3.8.1"
+        "OpenNebula 3.8.2"
     end
 
     IMAGE_STATES=%w{INIT READY USED DISABLED LOCKED ERROR CLONE DELETE USED_PERS}
@@ -170,13 +170,16 @@ module OneDBFsck
 
         users_fix = {}
 
-        @db.fetch("SELECT oid,body FROM user_pool") do |row|
+        @db.fetch("SELECT oid,body,gid FROM user_pool") do |row|
             doc = Document.new(row[:body])
 
             gid = doc.root.get_text('GID').to_s.to_i
+            user_gid = gid
 
             if group[gid].nil?
                 log_error("User #{row[:oid]} is in group #{gid}, but it does not exist")
+
+                user_gid = 1
 
                 doc.root.each_element('GID') do |e|
                     e.text = "1"
@@ -186,15 +189,24 @@ module OneDBFsck
                     e.text = "users"
                 end
 
-                users_fix[row[:oid]] = doc.to_s
-            else
-                group[gid] << row[:oid]
+                users_fix[row[:oid]] = {:body => doc.to_s, :gid => user_gid}
             end
 
+            if gid != row[:gid]
+                log_error(
+                    "User #{row[:oid]} is in group #{gid}, but the DB "<<
+                    "table has GID column #{row[:gid]}")
+
+                users_fix[row[:oid]] = {:body => doc.to_s, :gid => user_gid}
+            end
+
+            group[user_gid] << row[:oid]
         end
 
-        users_fix.each do |id, body|
-            @db[:user_pool].where(:oid => id).update(:body => body)
+        users_fix.each do |id, user|
+            @db[:user_pool].where(:oid => id).update(
+                :body => user[:body],
+                :gid => user[:gid])
         end
 
 
@@ -1196,7 +1208,7 @@ module OneDBFsck
 
             net_elem.each_element("LEASES_USED") { |e|
                 if e.text != leases_used.to_s
-                    log_error("#{resource} #{oid} quotas: VNet #{vnet_id}\tLEASES_USED has #{e.text.to_i} \tis\t#{leases_used}")
+                    log_error("#{resource} #{oid} quotas: VNet #{vnet_id}\tLEASES_USED has #{e.text} \tis\t#{leases_used}")
                     e.text = leases_used.to_s
                 end
             }
@@ -1231,7 +1243,7 @@ module OneDBFsck
 
             img_elem.each_element("RVMS_USED") { |e|
                 if e.text != rvms.to_s
-                    log_error("#{resource} #{oid} quotas: Image #{img_id}\tRVMS has #{e.text.to_i} \tis\t#{rvms}")
+                    log_error("#{resource} #{oid} quotas: Image #{img_id}\tRVMS has #{e.text} \tis\t#{rvms}")
                     e.text = rvms.to_s
                 end
             }
@@ -1282,14 +1294,14 @@ module OneDBFsck
 
             ds_elem.each_element("IMAGES_USED") { |e|
                 if e.text != images_used.to_s
-                    log_error("#{resource} #{oid} quotas: Datastore #{ds_id}\tIMAGES_USED has #{e.text.to_i} \tis\t#{images_used}")
+                    log_error("#{resource} #{oid} quotas: Datastore #{ds_id}\tIMAGES_USED has #{e.text} \tis\t#{images_used}")
                     e.text = images_used.to_s
                 end
             }
 
             ds_elem.each_element("SIZE_USED") { |e|
                 if e.text != size_used.to_s
-                    log_error("#{resource} #{oid} quotas: Datastore #{ds_id}\tSIZE_USED has #{e.text.to_i} \tis\t#{size_used}")
+                    log_error("#{resource} #{oid} quotas: Datastore #{ds_id}\tSIZE_USED has #{e.text} \tis\t#{size_used}")
                     e.text = size_used.to_s
                 end
             }
