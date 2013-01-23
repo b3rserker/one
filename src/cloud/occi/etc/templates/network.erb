@@ -20,6 +20,6 @@ DESCRIPTION = "<%= @vnet_info['DESCRIPTION'] %>"
 PUBLIC = "<%= @vnet_info['PUBLIC'] %>"
 <% end %>
 
-#BRIDGE = NAME_OF_DEFAULT_BRIDGE
-#PHYDEV = NAME_OF_PHYSICAL_DEVICE
-#VLAN   = YES|NO
+BRIDGE = xenbr0
+PHYDEV = eth0 
+VLAN   = NO

@@ -8,9 +8,15 @@
     NAME   = "<%= @vm_info['NAME'] %>"
 <% end %>
 
+OS= [ BOOTLOADER=pygrub ]
+
 <% @vm_info.each('DISK') do |disk| %>
     <% if disk.attr('STORAGE','href') %>
-      DISK = [ IMAGE_ID = <%= disk.attr('STORAGE','href').split('/').last %>
+      DISK = [ IMAGE_ID = <%= disk.attr('STORAGE','href').split('/').last %>,
+               DRIVER = "tap2:tapdisk:aio:"
+               <% if disk['TARGET'] %>
+                        ,TARGET = <%= disk['TARGET']  %>
+               <% end %>
            ]
     <% end %>
 <% end %>
