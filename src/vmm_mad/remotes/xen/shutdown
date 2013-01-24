@@ -41,3 +41,5 @@ retry $TIMEOUT monitor
 
 force_shutdown "$deploy_id" "$XM_CANCEL $deploy_id"
 
+# clean-up hanging tapdisk processes
+$(dirname $0)/tapdestroy

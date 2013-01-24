@@ -24,3 +24,6 @@ dest_host=$2
 
 exec_and_log "$XM_MIGRATE $deploy_id $dest_host" \
     "Could not migrate $deploy_id to $dest_host"
+
+# clean-up hanging tapdisk processes
+$(dirname $0)/tapdestroy

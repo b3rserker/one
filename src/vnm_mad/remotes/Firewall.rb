@@ -60,7 +60,11 @@ class OpenNebulaFirewall < OpenNebulaNetwork
                     if %w(no drop).include? nic[:icmp].downcase
                         nic_rules << filter_established(chain, :icmp, :accept)
                         nic_rules << filter_protocol(chain, :icmp, :drop)
+                    else
+                        nic_rules << filter_protocol(chain, :icmp, :accept)
                     end
+                else
+                    nic_rules << filter_protocol(chain, :icmp, :accept)
                 end
 
                 process_chain(chain, tap, nic_rules)
@@ -131,7 +135,7 @@ class OpenNebulaFirewall < OpenNebulaNetwork
     end
 
     def tap_to_chain(tap, chain)
-        rule "-A FORWARD -m physdev --physdev-out #{tap} -j #{chain}"
+        rule "-I FORWARD -m physdev --physdev-out #{tap} --physdev-is-bridged -j #{chain}"
     end
 
     def new_chain(chain)

@@ -35,3 +35,5 @@ while [ -n "$OUT" ]; do
     OUT=$(gdm)
 done
 
+# clean-up hanging tapdisk processes
+$(dirname $0)/tapdestroy

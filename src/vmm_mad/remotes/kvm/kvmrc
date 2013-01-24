@@ -24,9 +24,8 @@ export QEMU_PROTOCOL=qemu+ssh
 export SHUTDOWN_TIMEOUT=300
 
 # Uncomment this line to force VM cancellation after shutdown timeout
-#export FORCE_DESTROY=yes
+export FORCE_DESTROY=yes
 
 # Uncomment this line to force VM's without ACPI enabled to be destroyed
 # on shutdown
-#CANCEL_NO_ACPI=yes
-
+export CANCEL_NO_ACPI=yes

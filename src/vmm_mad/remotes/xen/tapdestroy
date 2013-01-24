@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Script for cleaning up XEN 4.1.2 tapdisk processes, reads list of running VMs
+# by sudo xm list and list of connected tapdisks by sudo tap-ctl list. Destroys
+# orphaned processes.
+# 
+# For use with OpenNebula, add the following to /etc/sudoers:
+#
+# oneadmin ALL=(ALL) NOPASSWD: /usr/sbin/tap-ctl * 
+# oneadmin ALL=(ALL) NOPASSWD: /usr/sbin/xm *
+#
+# Filip Hubik
+# 17.10.2012
+
+# log file
+log=/tmp/tapdestroy_`hostname -f`.log
+current_date=`date`
+echo -e "**************** $current_date *****************" >> $log
+
+# array for save list of running XEN VM IDs
+xen_ids=()
+
+# cutout and parse xm list message
+echo "Found ONE VMs with IDs:" >> $log
+for line in $(sudo xm list | sed '/^[^o][^n][^e].*/d' | sed 's/^one-\([[:digit:]]\{1,\}\).*/\1/')
+do
+   echo "$line" >> $log
+   xen_ids[i++]=$line
+done
+
+# save the field separator
+older_IFS=$IFS
+# new field separator, the end of line
+IFS=$'\n'
+
+# parse output of "sudo tap-ctl list -t aio", beware - piped output is different than stdin output!
+for line in $(sudo tap-ctl list -t aio | sed 's%^ *pid=\([[:alnum:]]*\) *minor=\([[:alnum:]]*\) *[[:alnum:] =:/]\{1,\}/\([[:digit:]]*\)/disk.*%\1 \2 \3%g')
+do
+  old_FS=$IFS
+  IFS=' '
+
+  # tap_fields - [0] major number, [1] minor number, [2] XEN VM ID
+  tap_fields=()
+
+  # parse tap_fields structure
+  for x in $line
+  do
+    tap_fields=("${tap_fields[@]}" $x)
+  done
+  IFS=$old_IFS
+
+  ## Test if this VM ID in tap_fields doesn´t correspond to any ID of running VMs, if it´s true, kill it
+
+  # is VM´s ID found in tap_field[2]?
+  found=0
+  for id in ${xen_ids[@]}
+  do
+    # i found it
+    if [ X"${tap_fields[2]}" = X"$id" ]; then
+      echo "HIT for MAJOR:${tap_fields[0]} and MINOR:${tap_fields[1]}" >> $log
+      found=1
+    fi
+  done
+
+  # if not found => destroy
+  if [ $found -ne 1 ]; then
+    echo -e "tap-ctl destroy XEN_ID:${tap_fields[2]} \t MAJOR:${tap_fields[0]} \t MINOR:${tap_fields[1]}" >>  $log
+    sudo tap-ctl destroy -p ${tap_fields[0]} -m ${tap_fields[1]}
+  fi
+done
+IFS=$older_IFS     # restore default field separator
