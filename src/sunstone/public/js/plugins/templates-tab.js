@@ -14,6 +14,14 @@
 /* limitations under the License.                                             */
 /* -------------------------------------------------------------------------- */
 
+/* textarea helper */
+
+function htmlDecode(input){
+  var e = document.createElement('div');
+  e.innerHTML = input;
+  return e.childNodes.length === 0 ? "" : e.childNodes[0].nodeValue;
+}
+
 /*Templates tab plugin*/
 
 var templates_tab_content = '\
@@ -680,7 +688,7 @@ var template_actions = {
         type: "single",
         call: OpenNebula.Template.fetch_template,
         callback: function (request,response) {
-            $('#template_template_update_dialog #template_template_update_textarea').val(response.template);
+            $('#template_template_update_dialog #template_template_update_textarea').val(htmlDecode(response.template));
         },
         error: onError
     },
@@ -2150,7 +2158,8 @@ $(document).ready(function(){
         "oLanguage": (datatable_lang != "") ?
             {
                 sUrl: "locale/"+lang+"/"+datatable_lang
-            } : ""
+            } : "",
+        "iDisplayLength": 25
     });
 
     dataTable_templates.fnClearTable();

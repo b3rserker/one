@@ -24,6 +24,19 @@ function loadVNC(){
 }
 loadVNC();
 
+$(document).ready(function(){
+    setInterval(function(){
+        $('[id*="-IP"]').each(function (index, elm){
+            if (!$(elm).hasClass("resolved")){
+                $.get("/resolver?ip=" + $(elm).text()).complete(function(responseObj){
+                    $(elm).text(responseObj.responseText);
+                    $(elm).addClass("resolved");
+                });
+            }
+        });
+    }, 3000);
+});
+
 var vm_graphs = [
     { title : tr("CPU"),
       monitor_resources : "CPU",
@@ -73,8 +86,8 @@ var vms_tab_content = '\
       <th>'+tr("Status")+'</th>\
       <th>'+tr("Used CPU")+'</th>\
       <th>'+tr("Used Memory")+'</th>\
-      <th>'+tr("Host")+'</th>\
-      <th>'+tr("IPs")+'</th>\
+      <th>'+tr("VM is running on")+'</th>\
+      <th>'+tr("VM\'s IP(s)")+'</th>\
       <th>'+tr("Start Time")+'</th>\
       <th>'+tr("VNC Access")+'</th>\
     </tr>\
@@ -797,10 +810,10 @@ function ip_str(vm){
     if ($.isArray(nic)) {
         ip = '';
         $.each(nic, function(index,value){
-            ip += value.IP+'<br />';
+            ip += "<span id='" + vm.ID + "-" + index + "-IP'>" + value.IP + "</span><br />";
         });
     } else if (nic && nic.IP) {
-        ip = nic.IP;
+        ip = "<span id='" + vm.ID + "-IP'>" + nic.IP + "</span>";
     };
     return ip;
 };
@@ -1197,7 +1210,7 @@ function printDisks(vm_info){
          </tr>\
          <tr class="at_volatile at_image"><td class="key_td"><label>'+tr("Device prefix")+':</label></td>\
              <td class="value_td">\
-                <input type="text" name="DEV_PREFIX" value="sd" style="width:8em;"></input>\
+               <input type="text" name="DEV_PREFIX" value="xvd" style="width:8em;"></input>\
              </td>\
          </tr>\
 <!--\
@@ -1291,12 +1304,14 @@ function hotpluggingOps(){
             }
             disk_obj.IMAGE_ID = $('select[name="IMAGE_ID"]',this).val();
             disk_obj.DEV_PREFIX = $('input[name="DEV_PREFIX"]',this).val();
+            //disk_obj.TARGET = $('input[name="TARGET"]',this).val();
             break;
         case "volatile":
             disk_obj.SIZE = $('input[name="SIZE"]',this).val();
             disk_obj.FORMAT = $('input[name="FORMAT"]',this).val();
             disk_obj.TYPE = $('select[name="TYPE"]',this).val();
             disk_obj.DEV_PREFIX = $('input[name="DEV_PREFIX"]',this).val();
+            //disk_obj.TARGET = $('input[name="TARGET"]',this).val();
 //            disk_obj.READONLY = $('select[name="READONLY"]',this).val();
 //            disk_obj.SAVE = $('save[name="SAVE"]',this).val();
             break;
@@ -1619,13 +1634,16 @@ $(document).ready(function(){
             { "sWidth": "60px", "aTargets": [0,6,7] },
             { "sWidth": "35px", "aTargets": [1,11] },
             { "sWidth": "150px", "aTargets": [5,10] },
-            { "sWidth": "100px", "aTargets": [2,3,9] },
+            { "sWidth": "100px", "aTargets": [2,3] },
+            { "sWidth": "80px", "aTargets": [8] },
+            { "sWidth": "240px", "aTargets": [9] },
             { "bVisible": false, "aTargets": [6,7,10]}
         ],
         "oLanguage": (datatable_lang != "") ?
             {
                 sUrl: "locale/"+lang+"/"+datatable_lang
-            } : ""
+            } : "",
+        "iDisplayLength": 25
     });
 
     dataTable_vMachines.fnClearTable();

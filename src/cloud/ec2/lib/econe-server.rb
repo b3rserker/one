@@ -98,6 +98,8 @@ end
 set :bind, settings.config[:host]
 set :port, settings.config[:port]
 
+set :environment, :production
+
 begin
     ENV["ONE_CIPHER_AUTH"] = EC2_AUTH
     cloud_auth = CloudAuth.new(settings.config, settings.logger)

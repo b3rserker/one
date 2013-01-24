@@ -58,6 +58,8 @@ require 'CloudAuth'
 require 'SunstoneServer'
 require 'SunstonePlugins'
 
+require 'ipaddr'
+require 'resolv'
 
 ##############################################################################
 # Configuration
@@ -79,6 +81,8 @@ CloudServer.print_configuration(conf)
 set :config, conf
 set :bind, settings.config[:host]
 set :port, settings.config[:port]
+
+set :environment, :production
 
 use Rack::Session::Pool, :key => 'sunstone'
 
@@ -215,6 +219,30 @@ if settings.config[:routes]
     settings.config[:routes].each { |route|
         require "routes/#{route}"
     }
+end
+
+##############################################################################
+# Resolve an IP to a hostname if possible
+##############################################################################
+get '/resolver' do
+    vm_ip = params[:ip]
+
+    begin
+        IPAddr.new vm_ip
+    rescue
+        return [400, "Data doesn't seem to contain a valid IP address!"]
+    end
+
+    vm_hostname = nil
+    begin
+        vm_hostname = Resolv.getname(vm_ip)
+    rescue
+        # couldn't resolve the IP, ignore the exception
+    end
+
+    vm_hostname = vm_ip if vm_hostname.nil?
+
+    return [200, vm_hostname]
 end
 
 ##############################################################################

@@ -1221,7 +1221,8 @@ $(document).ready(function(){
         "oLanguage": (datatable_lang != "") ?
             {
                 sUrl: "locale/"+lang+"/"+datatable_lang
-            } : ""
+            } : "",
+        "iDisplayLength": 25
     });
 
     dataTable_images.fnClearTable();

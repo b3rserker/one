@@ -93,6 +93,8 @@ set :config, config
 set :bind, config[:host]
 set :port, config[:port]
 
+set :environment, :production
+
 use Rack::Session::Pool, :key => 'ozones'
 
 #Enable logger

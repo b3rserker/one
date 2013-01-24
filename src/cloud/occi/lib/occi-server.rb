@@ -111,6 +111,7 @@ end
 set :bind, settings.config[:host]
 set :port, settings.config[:port]
 
+set :environment, :production
 
 # Create CloudAuth
 begin
