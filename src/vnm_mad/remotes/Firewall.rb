@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2013, OpenNebula Project Leads (OpenNebula.org)             #
+# Copyright 2002-2012, OpenNebula Project Leads (OpenNebula.org)             #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -76,24 +76,38 @@ class OpenNebulaFirewall < OpenNebulaNetwork
         vm_id =  @vm['ID']
         process do |nic|
             chain   = "one-#{vm_id}-#{nic[:network_id]}"
+
             iptables_out = `#{COMMANDS[:iptables]} -n -v --line-numbers -L FORWARD`
-            if m = iptables_out.match(/.*#{chain}.*/)
-                rule_num = m[0].split(/\s+/)[0]
-                purge_chain(chain, rule_num)
-            end
+
+            while rule_num = iptables_out.match(/([[:digit:]]+).*#{chain}.*/)
+                purge_rule(rule_num[1])
+                iptables_out = `#{COMMANDS[:iptables]} -n -v --line-numbers -L FORWARD`
+            end            
+
+            purge_chain(chain)
         end
     end
 
-    def purge_chain(chain, rule_num)
-        rules = Array.new
+    def purge_rule(rule_num)
+        rules = []
+        
         rules << rule("-D FORWARD #{rule_num}")
+        
+        run_rules rules
+    end
+
+    def purge_chain(chain)
+        rules = Array.new
+
         rules << rule("-F #{chain}")
         rules << rule("-X #{chain}")
+
         run_rules rules
     end
 
     def process_chain(chain, tap, nic_rules)
         rules = Array.new
+
         if !nic_rules.empty?
             # new chain
             rules << new_chain(chain)
@@ -102,6 +116,7 @@ class OpenNebulaFirewall < OpenNebulaNetwork
 
             rules << nic_rules
         end
+
         run_rules rules
     end
 
@@ -135,7 +150,10 @@ class OpenNebulaFirewall < OpenNebulaNetwork
     end
 
     def tap_to_chain(tap, chain)
-        rule "-I FORWARD -m physdev --physdev-out #{tap} --physdev-is-bridged -j #{chain}"
+	rules = []
+
+        rules << rule("-I FORWARD -m physdev --physdev-out #{tap} --physdev-is-bridged -j #{chain}")
+        rules << rule("-I FORWARD -m physdev --physdev-out #{tap}-emu --physdev-is-bridged -j #{chain}")
     end
 
     def new_chain(chain)
