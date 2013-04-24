@@ -38,24 +38,6 @@ fi
 
 . $TMCOMMON
 
-function exec_and_set_error
-{
-    message=$2
-
-    EXEC_LOG_ERR=`$1 2>&1 1>/dev/null`
-    EXEC_LOG_RC=$?
-
-    if [ $EXEC_LOG_RC -ne 0 ]; then
-        log_error "Command \"$1\" failed: $EXEC_LOG_ERR"
-
-        if [ -n "$2" ]; then
-            export ERROR="$2"
-        else
-            export ERROR="Error executing $1: $EXEC_LOG_ERR"
-        fi
-    fi
-}
-
 function exit_error
 {
     error_message "$ERROR"
@@ -81,7 +63,8 @@ VM_ID=`basename $DST_DIR`
 ISO_DIR="$DS_DIR/.isofiles/$VM_ID"
 ISO_FILE="$ISO_DIR/$VM_ID.iso"
 
-exec_and_set_error "mkdir -p $ISO_DIR" "Could not create tmp dir to make context dev"
+exec_and_set_error "mkdir -p $ISO_DIR" \
+    "Could not create tmp dir to make context dev"
 [ -n "$ERROR" ] && exit_error
 
 for f in $SRC; do
@@ -97,7 +80,8 @@ for f in $SRC; do
     [ -n "$ERROR" ] && exit_error
 done
 
-exec_and_set_error "$MKISOFS -o $ISO_FILE -J -R $ISO_DIR" "Error creating iso fs"
+exec_and_set_error "$MKISOFS -o $ISO_FILE -J -R $ISO_DIR" \
+    "Error creating iso fs"
 [ -n "$ERROR" ] && exit_error
 
 exec_and_set_error "$SCP $ISO_FILE $DST" "Error copying context ISO to $DST"
