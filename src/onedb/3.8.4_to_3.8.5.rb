@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------- #
-# Copyright 2002-2013, OpenNebula Project Leads (OpenNebula.org)             #
+# Copyright 2002-2013, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -14,26 +14,16 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
-# Default configuration attributes for the Xen driver
-# (all domains will use these values as defaults). These values can
-# be overridden in each VM template. Valid atributes are:
-#  - credit
-#  - os [kernel,initrd,root,kernel_cmd]
-#  - vcpu
-#  - disk[driver]
-#  - nic[model]
-#  - raw
+module Migrator
+    def db_version
+        "3.8.5"
+    end
 
-#VCPU  = 1
-#OS    = [ kernel="/vmlinuz", initrd="/initrd.img", root="sda1", kernel_cmd="ro" ]
+    def one_version
+        "OpenNebula 3.8.5"
+    end
 
-VCPU = 2
-MEMORY =  1024
-
-CREDIT = 256
-DISK   = [ driver = "tap2:tapdisk:aio:" ]
-OS = [
-        BOOTLOADER = "pygrub"
-]
-
-RAW   = "data=\"on_crash=destroy\""
+    def up
+        return true
+    end
+end
