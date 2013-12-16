@@ -19,12 +19,15 @@ require 'thread'
 class CloudAuth
     # These are the authentication methods for the user requests
     AUTH_MODULES = {
-        "occi"       => 'OCCICloudAuth',
-        "sunstone"   => 'SunstoneCloudAuth' ,
-        "ec2"        => 'EC2CloudAuth',
-        "x509"       => 'X509CloudAuth',
-        "opennebula" => 'OpenNebulaCloudAuth',
-        "onegate"    => 'OneGateCloudAuth'
+        "occi"              => 'OCCICloudAuth',
+        "sunstone"          => 'SunstoneCloudAuth',
+        "sunstone_x509"     => 'SunstoneX509CloudAuth',
+        "sunstone_krb"      => 'SunstoneKrbCloudAuth',
+        "sunstone_x509_krb" => 'SunstoneX509KrbCloudAuth',
+        "ec2"               => 'EC2CloudAuth',
+        "x509"              => 'X509CloudAuth',
+        "opennebula"        => 'OpenNebulaCloudAuth',
+        "onegate"           => 'OneGateCloudAuth'
     }
 
     # These are the authentication modules for the OpenNebula requests

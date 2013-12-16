@@ -18,7 +18,7 @@
 
 <body>
 
-<% if settings.config[:auth] == "x509" %>
+<% if ["x509", "sunstone_x509", "sunstone_krb", "sunstone_x509_krb"].include?(settings.config[:auth]) %>
   <%= erb :_login_x509 %>
 <% else %>
   <%= erb :_login_standard %>

@@ -131,6 +131,8 @@ configure do
     set :erb, :trim => '-'
 end
 
+$apache_mod = $conf[:auth].include?('sunstone_')
+
 ##############################################################################
 # Helpers
 ##############################################################################
@@ -144,12 +146,20 @@ helpers do
             result = $cloud_auth.auth(request.env, params)
         rescue Exception => e
             logger.error { e.message }
-            return [500, ""]
+            if $apache_mod
+              halt(500, "")
+            else
+              return [500, ""]
+            end
         end
 
         if result.nil?
             logger.info { "Unauthorized login attempt" }
-            return [401, ""]
+            if $apache_mod
+              halt(401, "")
+            else
+              return [401, ""]
+            end
         else
             client  = $cloud_auth.client(result)
             user_id = OpenNebula::User::SELF
@@ -158,15 +168,19 @@ helpers do
             rc = user.info
             if OpenNebula.is_error?(rc)
                 logger.error { rc.message }
-                return [500, ""]
+                if $apache_mod
+                  halt(500, "")
+                else
+                  return [500, ""]
+                end
             end
 
-            session[:user]         = user['NAME']
-            session[:user_id]      = user['ID']
-            session[:user_gid]     = user['GID']
-            session[:user_gname]   = user['GNAME']
-            session[:ip]           = request.ip
-            session[:remember]     = params[:remember]
+            session[:user]       = user['NAME']
+            session[:user_id]    = user['ID']
+            session[:user_gid]   = user['GID']
+            session[:user_gname] = user['GNAME']
+            session[:ip]         = request.ip
+            session[:remember]   = params[:remember]
             session[:display_name] = user[DISPLAY_NAME_XPATH] || user['NAME']
 
             #User IU options initialization
@@ -221,13 +235,23 @@ end
 before do
     cache_control :no_store
     content_type 'application/json', :charset => 'utf-8'
-    unless request.path=='/login' || request.path=='/' || request.path=='/vnc'
-        halt 401 unless authorized?
 
-        @SunstoneServer = SunstoneServer.new(
-                              $cloud_auth.client(session[:user]),
-                              $conf,
-                              logger)
+    if $apache_mod
+      build_session
+
+      @SunstoneServer = SunstoneServer.new(
+                            $cloud_auth.client(session[:user]),
+                            $conf,
+                            logger)
+    else
+      unless request.path=='/login' || request.path=='/' || request.path=='/vnc'
+          halt 401 unless authorized?
+
+          @SunstoneServer = SunstoneServer.new(
+                                $cloud_auth.client(session[:user]),
+                                $conf,
+                                logger)
+      end
     end
 end
 
@@ -240,7 +264,7 @@ after do
                 env['rack.session.options'][:expire_after] = SESSION_EXPIRE_TIME
             end
         end
-    end
+    end unless $apache_mod
 end
 
 ##############################################################################
@@ -259,7 +283,7 @@ get '/' do
     content_type 'text/html', :charset => 'utf-8'
     if !authorized?
         return erb :login
-    end
+    end unless $apache_mod
 
     response.set_cookie("one-user", :value=>"#{session[:user]}")
 
@@ -268,17 +292,20 @@ end
 
 get '/login' do
     content_type 'text/html', :charset => 'utf-8'
-    if !authorized?
-        erb :login
+
+    if !$apache_mod && !authorized?
+      erb :login
+    else
+      redirect 'http://metavo.metacentrum.cz/'
     end
 end
 
 get '/vnc' do
     content_type 'text/html', :charset => 'utf-8'
-    if !authorized?
-        erb :login
+    if !$apache_mod && !authorized?
+      erb :login
     else
-        erb :vnc
+      erb :vnc
     end
 end
 
@@ -286,11 +313,16 @@ end
 # Login
 ##############################################################################
 post '/login' do
-    build_session
+    build_session unless $apache_mod
 end
 
 post '/logout' do
-    destroy_session
+    if $apache_mod
+      destroy_session
+      redirect 'http://metavo.metacentrum.cz/'
+    else
+      destroy_session
+    end
 end
 
 ##############################################################################
@@ -327,10 +359,10 @@ post '/config' do
         error 500, ""
     end
 
-    session[:lang]         = user['TEMPLATE/LANG']
-    session[:vnc_wss]      = user['TEMPLATE/VNC_WSS']
+    session[:lang] = user['TEMPLATE/LANG']
+    session[:vnc_wss] = user['TEMPLATE/VNC_WSS']
     session[:default_view] = user['TEMPLATE/DEFAULT_VIEW']
-    session[:table_order]  = user['TEMPLATE/TABLE_ORDER']
+    session[:table_order] = user['TEMPLATE/TABLE_ORDER']
     session[:display_name] = user[DISPLAY_NAME_XPATH] || user['NAME']
 
     [200, ""]
