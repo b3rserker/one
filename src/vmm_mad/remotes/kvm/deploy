@@ -24,6 +24,13 @@ domain=$1
 mkdir -p `dirname $domain`
 cat > $domain
 
+perl -0pe 's/<filterref(?:(?!<\/filterref>).)*<parameter name='\'IP'\'' value='\''((10\.(19|51))|(172\.16))\..*?<\/filterref>//sg' $domain | sed '/^[[:space:]]*$/d' > ${domain}.tmp
+if [ "x${PIPESTATUS[0]}" = "x0" ]; then
+    mv ${domain}.tmp $domain
+else
+    rm ${domain}.tmp
+fi
+
 data=`virsh --connect $LIBVIRT_URI create $domain`
 
 if [ "x$?" = "x0" ]; then
