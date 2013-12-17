@@ -100,6 +100,14 @@ class OpenNebulaFirewall < OpenNebulaNetwork
         unlock
     end
 
+    def purge_rule(rule_num)
+        rules = []
+        
+        rules << rule("-D FORWARD #{rule_num}")
+        
+        run_rules rules
+    end
+
     def purge_chain(chain)
         rules = Array.new
 
