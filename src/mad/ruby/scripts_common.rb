@@ -58,19 +58,21 @@ module OpenNebula
     # Executes a command, if it fails returns error message and exits
     # If a second parameter is present it is used as the error message when
     # the command fails
-    def self.exec_and_log(command, message=nil)
+    def self.exec_and_log(command, message=nil, netfilter_clean=false)
         output=`#{command} 2>&1 1>/dev/null`
         code=$?.exitstatus
 
         if code!=0
             log_error "Command \"#{command}\" failed."
             log_error output
+
             if !message
                 error_message output
             else
                 error_message message
             end
-            exit code
+
+            exit code unless netfilter_clean
         end
         log "Executed \"#{command}\"."
     end

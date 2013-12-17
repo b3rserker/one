@@ -96,7 +96,7 @@ class OpenNebulaFirewall < OpenNebulaNetwork
         rules << rule("-D FORWARD #{rule_num}")
         rules << rule("-F #{chain}")
         rules << rule("-X #{chain}")
-        run_rules rules
+        run_rules rules,clean=true
     end
 
     def process_chain(chain, tap, nic_rules)
@@ -109,7 +109,7 @@ class OpenNebulaFirewall < OpenNebulaNetwork
 
             rules << nic_rules
         end
-        run_rules rules
+        run_rules rules,clean=true
     end
 
     def filter_established(chain, protocol, policy)
@@ -117,9 +117,9 @@ class OpenNebulaFirewall < OpenNebulaNetwork
         rule "-A #{chain} -p #{protocol} -m state --state ESTABLISHED -j #{policy}"
     end
 
-    def run_rules(rules)
+    def run_rules(rules, clean = false)
         rules.flatten.each do |rule|
-            OpenNebula.exec_and_log(rule)
+            OpenNebula.exec_and_log(rule, nil, clean)
         end
     end
 
