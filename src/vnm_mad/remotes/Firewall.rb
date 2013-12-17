@@ -65,7 +65,11 @@ class OpenNebulaFirewall < OpenNebulaNetwork
                     if %w(no drop).include? nic[:icmp].downcase
                         nic_rules << filter_established(chain, :icmp, :accept)
                         nic_rules << filter_protocol(chain, :icmp, :drop)
+                    else
+                        nic_rules << filter_protocol(chain, :icmp, :accept)
                     end
+                else
+                    nic_rules << filter_protocol(chain, :icmp, :accept)
                 end
 
                 process_chain(chain, tap, nic_rules)
@@ -81,26 +85,33 @@ class OpenNebulaFirewall < OpenNebulaNetwork
         vm_id =  @vm['ID']
         process do |nic|
             chain   = "one-#{vm_id}-#{nic[:network_id]}"
+
             iptables_out = `#{COMMANDS[:iptables]} -n -v --line-numbers -L FORWARD`
-            if m = iptables_out.match(/.*#{chain}.*/)
-                rule_num = m[0].split(/\s+/)[0]
-                purge_chain(chain, rule_num)
-            end
+
+            while rule_num = iptables_out.match(/([[:digit:]]+).*#{chain}.*/)
+                purge_rule(rule_num[1])
+                iptables_out = `#{COMMANDS[:iptables]} -n -v --line-numbers -L FORWARD`
+            end            
+
+            purge_chain(chain)
         end
+    end
 
         unlock
     end
 
-    def purge_chain(chain, rule_num)
+    def purge_chain(chain)
         rules = Array.new
-        rules << rule("-D FORWARD #{rule_num}")
+
         rules << rule("-F #{chain}")
         rules << rule("-X #{chain}")
+
         run_rules rules,clean=true
     end
 
     def process_chain(chain, tap, nic_rules)
         rules = Array.new
+
         if !nic_rules.empty?
             # new chain
             rules << new_chain(chain)
@@ -109,7 +120,8 @@ class OpenNebulaFirewall < OpenNebulaNetwork
 
             rules << nic_rules
         end
-        run_rules rules,clean=true
+
+        run_rules rules
     end
 
     def filter_established(chain, protocol, policy)
@@ -142,7 +154,10 @@ class OpenNebulaFirewall < OpenNebulaNetwork
     end
 
     def tap_to_chain(tap, chain)
-        rule "-A FORWARD -m physdev --physdev-out #{tap} -j #{chain}"
+	rules = []
+
+        rules << rule("-I FORWARD -m physdev --physdev-out #{tap} --physdev-is-bridged -j #{chain}")
+        rules << rule("-I FORWARD -m physdev --physdev-out #{tap}-emu --physdev-is-bridged -j #{chain}")
     end
 
     def new_chain(chain)
